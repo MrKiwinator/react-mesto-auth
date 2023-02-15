@@ -1,13 +1,11 @@
 import React from "react";
-import { Routes, Route, useLocation, Link } from "react-router-dom"
+import { Routes, Route, Link } from "react-router-dom"
 import logoPath from "../images/logo.svg";
 import burgerIcon from "../images/burger-icon.svg"
 import closeIcon from "../images/menu-close-icon.svg"
 import BurgerMenu from "./BurgerMenu";
 
 function Header(props) {
-
-    const location = useLocation();
 
     return (
         <header className="header">
@@ -42,12 +40,12 @@ function Header(props) {
                         } />
                             
                         <Route path="/sign-up" element={
-                            <Link className="header__link" to="signin">
+                            <Link className="header__link" to="/sign-in">
                                 Войти
                             </Link>
                         }/>
                         <Route path="/sign-in" element={
-                            <Link className="header__link" to="signup">
+                            <Link className="header__link" to="/sign-up">
                             Регистрация
                             </Link>
                         } />
