@@ -34,7 +34,6 @@ class Auth {
                 localStorage.setItem("jwt", data.token);
                 return data;
             })
-            .catch((err) => console.log(err));
     };
 
     getToken(token) {
@@ -45,8 +44,7 @@ class Auth {
                 'Authorization': `Bearer ${token}`
             }
         })
-        .then(res => res.json())
-        .then(data => data)
+        .then(this._checkResponse)
       } 
 }
 

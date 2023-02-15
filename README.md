@@ -22,4 +22,4 @@
 
 ## Код:
 
-Сайт был создан с помощью HTML, CSS3, React (библеотека JavaScript).
+Сайт был создан с помощью HTML, CSS3, React (библиотека JavaScript).

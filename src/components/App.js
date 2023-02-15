@@ -27,6 +27,32 @@ function App() {
     const [isInfoTooltipOpen, setInfoTooltipOpen] = React.useState(false);
     const [selectedCard, setSelectedCard] = React.useState(null);
     const [tooltipStatus, setTooltipStatus] = React.useState(null);
+    const [isLoading, setIsLoading] = React.useState(false);
+
+    // true if one of popups is opened:
+    const isOpen = isEditAvatarOpen || isEditProfileOpen || isAddPlaceOpen || selectedCard;
+
+    React.useEffect(() => {
+        function closeByEscape(evt) {
+            if(evt.key === 'Escape') {
+                // if InfoTooltip:
+                if(isInfoTooltipOpen) {
+                    closeInfoTooltip()
+                // if other popups:
+                } else {
+                    closeAllPopups();
+                }
+          }
+        }
+        if(isOpen || isInfoTooltipOpen) {
+        
+            document.addEventListener('keydown', closeByEscape);
+            return () => {
+              document.removeEventListener('keydown', closeByEscape);
+            }
+        }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, isInfoTooltipOpen]) 
 
     // ======= Hook for current user email: =======
 
@@ -104,7 +130,7 @@ function App() {
         setSelectedCard(null);
     }
 
-    function handleInfoTooltipClose() {
+    function closeInfoTooltip() {
         setInfoTooltipOpen(false);
         
         if (tooltipStatus === "success") {
@@ -124,6 +150,8 @@ function App() {
 
     // =================== FORM HANDLERS ========================
 
+    const buttonText = isLoading ? "Сохранение..." : "Сохранить"
+
     function handleCardLike(card) {
         const isLiked = card.likes.some(item => item._id === currentUser._id);
 
@@ -137,36 +165,51 @@ function App() {
     function handleCardDelete(card) {
         api.delCard(card._id)
             .then(() => {
-                setCards(cards.filter((item) => item !== card))
+                setCards((state) => state.filter((item) => item._id !== card._id)); 
             })
             .catch((err) => console.log(err))
     }
 
     function handleUpdateUser(userInfo) {
+        setIsLoading(true);
+
         api.setUserInfo(userInfo)
             .then((res) => {
                 setCurrentUser(res);
                 closeAllPopups();
             })
             .catch((err) => console.log(err))
+            .finally(() => {
+                setIsLoading(false);
+            })
     }
 
     function handleUpdateAvatar(userInfo) {
+        setIsLoading(true);
+
         api.setUserAvatar(userInfo.avatar)
             .then((res) => {
                 setCurrentUser(res);
                 closeAllPopups();
             })
             .catch((err) => console.log(err))
+            .finally(() => {
+                setIsLoading(false);
+            })
     }
 
     function handleAddPlaceSubmit(card) {
+        setIsLoading(true);
+
         api.addCard(card)
             .then((newCard) => {
                 setCards([newCard, ...cards]);
                 closeAllPopups();
             })
             .catch((err) => console.log(err))
+            .finally(() => {
+                setIsLoading(false);
+            })
     }
 
     // ======= Registration of new user: =======
@@ -179,6 +222,7 @@ function App() {
             [name]: value
         });
     }
+
     const handleUserRegSubmit = (e) => {
         e.preventDefault();
         
@@ -186,10 +230,11 @@ function App() {
         auth.register(email, password)
             .then(() => {
                 setTooltipStatus("success")
-                setInfoTooltipOpen(true);
             })
             .catch(() => {
-                setTooltipStatus("failed");
+                setTooltipStatus("failed");  
+            })
+            .finally(() => {
                 setInfoTooltipOpen(true);
             })
     }
@@ -273,36 +318,21 @@ function App() {
                 <Route 
                     path="/sign-up" 
                     element={
-                        <>
-                            <Register 
-                                handleSubmit={handleUserRegSubmit}
-                                handleChange={handleRegInputChange}
-                                formValue={formRegValue}
-                            />
-                            <InfoTooltip 
-                                tooltipStatus={tooltipStatus}
-                                isOpen={isInfoTooltipOpen}
-                                onClose={handleInfoTooltipClose}
-                            />
-                        </>
-                        
+                        <Register 
+                            handleSubmit={handleUserRegSubmit}
+                            handleChange={handleRegInputChange}
+                            formValue={formRegValue}
+                        />
                     } 
                 />
                 <Route 
                     path="/sign-in" 
                     element={
-                        <>
-                            <Login 
-                                handleSubmit={handleLoginSubmit}
-                                handleChange={handleLoginChange}
-                                formValue={formLoginValue}
-                            />
-                            <InfoTooltip 
-                                tooltipStatus={tooltipStatus}
-                                isOpen={isInfoTooltipOpen}
-                                onClose={handleInfoTooltipClose}
-                            />
-                        </>
+                        <Login 
+                            handleSubmit={handleLoginSubmit}
+                            handleChange={handleLoginChange}
+                            formValue={formLoginValue}
+                        />
                     }
                 />
                 <Route 
@@ -331,19 +361,22 @@ function App() {
                             <EditProfilePopup 
                                 isOpen={isEditProfileOpen} 
                                 onClose={closeAllPopups} 
-                                onUpdateUser={handleUpdateUser} 
+                                onUpdateUser={handleUpdateUser}
+                                submit={buttonText}
                             /> 
 
                             <EditAvatarPopup 
                                 isOpen={isEditAvatarOpen} 
                                 onClose={closeAllPopups} 
-                                onUpdateAvatar={handleUpdateAvatar} 
+                                onUpdateAvatar={handleUpdateAvatar}
+                                submit={buttonText}
                             />
                     
                             <AddPlacePopup 
                                 isOpen={isAddPlaceOpen}
                                 onClose={closeAllPopups}
                                 onAddPlace={handleAddPlaceSubmit}
+                                submit={buttonText}
                             />
                     
                             <PopupWithForm 
@@ -356,6 +389,11 @@ function App() {
                     }
                 />
             </Routes>
+            <InfoTooltip 
+                tooltipStatus={tooltipStatus}
+                isOpen={isInfoTooltipOpen}
+                onClose={closeInfoTooltip}
+            />
         </CurrentUserContext.Provider>
     );
 }
