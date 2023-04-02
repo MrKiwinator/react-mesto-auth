@@ -6,10 +6,10 @@ function Card(props) {
     const currentUser = React.useContext(CurrentUserContext);
 
     // Check if user is owner of the card:
-    const isOwn = props.card.owner._id === currentUser._id;
+    const isOwn = props.card.owner === currentUser._id;
 
     // Check if user set like to the card:
-    const isLiked = props.card.likes.some(i => i._id === currentUser._id);
+    const isLiked = props.card.likes.some(userLikeId => userLikeId === currentUser._id);
 
     // Like button style:
     const cardLikeButtonClassName = ( 

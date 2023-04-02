@@ -24,6 +24,7 @@ class Auth {
     authorize(email, password) {
         return fetch(`${this._url}/signin`, {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json",
             },
@@ -31,23 +32,29 @@ class Auth {
         })
             .then(this._checkResponse)
             .then((data) => {
-                localStorage.setItem("jwt", data.token);
+                localStorage.setItem("userId", data._id);
                 return data;
             })
     };
 
-    getToken(token) {
-        return fetch(`${this._url}/users/me`, {
-            method: 'GET',
+    logout(userId) {
+        return fetch(`${this._url}/logout`, {
+            method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json",
-                'Authorization': `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify({ userId }),
         })
-        .then(this._checkResponse)
-      } 
+            .then((res) => {
+                if (res.ok) {
+                    return;
+                }
+                return Promise.reject(`Ошибка: ${res.status}`);
+            })
+    }
 }
 
-const auth = new Auth ("https://auth.nomoreparties.co")
+const auth = new Auth ("https://api.mesto-service.nomoredomains.work"); //"http://localhost:3000"
 
 export default auth;

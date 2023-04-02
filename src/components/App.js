@@ -66,15 +66,6 @@ function App() {
 
     const [cards, setCards] = React.useState([]);
 
-    React.useEffect(() => {
-        Promise.all([api.getUserInfo(), api.getCards()])
-        .then(([userInfo, cards]) => {
-            setCurrentUser(userInfo);
-            setCards(cards);
-        })
-        .catch((err) => console.log(err))
-    }, [])
-
     // ======= Hook for navigation: =======
 
     const navigate = useNavigate();
@@ -99,10 +90,27 @@ function App() {
 
     const [loggedIn, setLoggedIn] = React.useState(false);
 
-    // ======= Hook for token check: =======
-
     React.useEffect(() => {
-        checkToken();
+
+        // getting userId from the localStorage:
+        const userId = localStorage.getItem('userId');
+
+        // if userId exist let user to pass auth:
+        if (userId) {
+            setLoggedIn(true);
+            navigate("/", {replace: true});
+        }
+        
+        // if user loggedIn send reqest on server to get required data:
+        if (loggedIn) {
+            Promise.all([api.getUserInfo(), api.getCards()])
+            .then(([userInfo, cards]) => {
+                setCurrentUser(userInfo);
+                setCards(cards);
+                setUserEmail(userInfo.email);
+            })
+            .catch((err) => console.log(err))
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loggedIn])
 
@@ -153,11 +161,11 @@ function App() {
     const buttonText = isLoading ? "Сохранение..." : "Сохранить"
 
     function handleCardLike(card) {
-        const isLiked = card.likes.some(item => item._id === currentUser._id);
-
+        const isLiked = card.likes.some(userId => userId === currentUser._id);
+        
         api.changeLikeCardStatus(card._id, !isLiked)
             .then((newCard) => {
-                setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
+                setCards(state => state.map((c) => c._id === card._id ? newCard : c));
             })
             .catch((err) => console.log(err))
     }
@@ -263,7 +271,7 @@ function App() {
 
         auth.authorize(formLoginValue.email, formLoginValue.password)
             .then((data) => {
-                if (data.token) {
+                if (data._id) {
                     setUserEmail(formLoginValue.email);
                     setFormLoginValue({email: '', password: ''});
                     handleLogin(e);
@@ -276,27 +284,16 @@ function App() {
             })
     }
 
-    const checkToken = () => {
-        const jwt = localStorage.getItem('jwt');
-        if (jwt){
-        auth.getToken(jwt)
-            .then((res) => {
-                if (res){
-                    setUserEmail(res.data.email);
-                    setLoggedIn(true);
-                    navigate("/", {replace: true});
-                }
-            })
-            .catch((err) => console.log(err))
-        }
-    }
-
     // ======= User logout: =======
 
-    const handleLogout = () => {
-        localStorage.removeItem("jwt");
-        navigate("/sign-in", {replace: true});
+    const handleLogout = (e) => {
+        e.preventDefault();
+
+        auth.logout(currentUser._id)
         setBurgerMenuOpen(false);
+        setLoggedIn(false);
+        navigate("/sign-in", {replace: true});
+        localStorage.removeItem("userId");
     }
 
     // =====================//////////==========================
